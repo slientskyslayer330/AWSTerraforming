@@ -13,3 +13,8 @@ output "amazon_linux_2_ami_id" {
   description = "Ami id of the amazon linux 2 image"
   value       = data.aws_ami.amazon-linux-2.id
 }
+
+output "aws_instance_public_ip" {
+  value       = aws_instance.application[*].public_ip
+  description = "Public Ips of EC2 instances"
+}
