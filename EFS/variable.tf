@@ -47,3 +47,9 @@ variable "application_instance_azs" {
   description = "azs of application instances"
   default     = ["ap-southeast-1a", "ap-southeast-1b"]
 }
+
+variable "efs_mount_point" {
+  type = string
+  description = "Mount path of EFS in EC2 instance"
+  default = "/mnt/efs/fs1"
+}

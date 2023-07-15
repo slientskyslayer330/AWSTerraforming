@@ -1,4 +1,4 @@
-resource "aws_vpc" "helloCloudTesting" {
+resource "aws_vpc" "testing" {
   cidr_block           = "10.0.0.0/16"
   instance_tenancy     = "default"
   enable_dns_support   = true
@@ -7,7 +7,7 @@ resource "aws_vpc" "helloCloudTesting" {
 
 resource "aws_subnet" "public_subnets" {
   for_each          = var.subnets.public.cidrs
-  vpc_id            = aws_vpc.helloCloudTesting.id
+  vpc_id            = aws_vpc.testing.id
   cidr_block        = each.value
   availability_zone = each.key
   tags = {
@@ -17,7 +17,7 @@ resource "aws_subnet" "public_subnets" {
 
 resource "aws_subnet" "private_subnets" {
   for_each          = var.subnets.private.cidrs
-  vpc_id            = aws_vpc.helloCloudTesting.id
+  vpc_id            = aws_vpc.testing.id
   cidr_block        = each.value
   availability_zone = each.key
   tags = {
@@ -26,15 +26,15 @@ resource "aws_subnet" "private_subnets" {
 }
 
 resource "aws_internet_gateway" "internet_gateway" {
-  vpc_id = aws_vpc.helloCloudTesting.id
+  vpc_id = aws_vpc.testing.id
 
   tags = {
-    Name = "igw-helloCloudTesting"
+    Name = "igw-testing"
   }
 }
 
 resource "aws_route_table" "public_sub_internet_rt" {
-  vpc_id = aws_vpc.helloCloudTesting.id
+  vpc_id = aws_vpc.testing.id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -42,7 +42,7 @@ resource "aws_route_table" "public_sub_internet_rt" {
   }
 
   tags = {
-    Name = "rt-hellocloudtesting"
+    Name = "rt-testing"
   }
 }
 

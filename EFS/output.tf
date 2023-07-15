@@ -1,11 +1,11 @@
 output "efs_filesystem_dns_name" {
   description = "DNS name of the created EFS file system"
-  value       = aws_efs_file_system.efs-helloCloudTesting.dns_name
+  value       = aws_efs_file_system.efs_testing.dns_name
 }
 
 output "efs_filesystem_id" {
   description = "DNS name of the created EFS file system"
-  value       = aws_efs_file_system.efs-helloCloudTesting.id
+  value       = aws_efs_file_system.efs_testing.id
 }
 
 

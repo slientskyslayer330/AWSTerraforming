@@ -13,7 +13,7 @@ data "aws_ami" "amazon-linux-2" {
 resource "aws_security_group" "sg_application_group" {
   name        = "applicationSecurityGroup"
   description = "Allow ssh access from internet to applications"
-  vpc_id      = aws_vpc.helloCloudTesting.id
+  vpc_id      = aws_vpc.testing.id
 
   ingress {
     description      = "ssh acceess allow to ec2"
@@ -25,6 +25,7 @@ resource "aws_security_group" "sg_application_group" {
   }
 
   egress {
+    description      = "Allow all outgoing connections"
     from_port        = 0
     to_port          = 0
     protocol         = "-1"
@@ -41,7 +42,8 @@ data "template_file" "efs_userdata" {
   template = file("${path.module}/scripts/efs_userdata.sh.tpl")
 
   vars = {
-    efs_dns_name = aws_efs_file_system.efs-helloCloudTesting.dns_name
+    efs_dns_name = aws_efs_file_system.efs_testing.dns_name
+    mount_point = var.efs_mount_point
   }
 }
 
@@ -49,13 +51,13 @@ resource "aws_instance" "application" {
   count                       = length(var.application_instance_azs)
   ami                         = data.aws_ami.amazon-linux-2.id
   instance_type               = var.application_instance_size
-  key_name                    = aws_key_pair.application_efs_key_pair.id
+  key_name                    = aws_key_pair.ec2_key_pair.id
   vpc_security_group_ids      = [aws_security_group.sg_application_group.id]
   subnet_id                   = aws_subnet.public_subnets[var.application_instance_azs[count.index]].id
   associate_public_ip_address = true
-  user_data = data.template_file.efs_userdata.rendered
+  user_data                   = data.template_file.efs_userdata.rendered
   tags = {
     Name = "${aws_subnet.public_subnets[var.application_instance_azs[count.index]].tags.Name}-ec2-instance"
   }
-  
+
 }

@@ -5,7 +5,7 @@ provider "aws" {
   default_tags {
     tags = {
       region  = "Singapore"
-      project = "helloCloudTesting"
+      project = "testing"
     }
   }
 }
