@@ -43,7 +43,7 @@ data "template_file" "efs_userdata" {
 
   vars = {
     efs_dns_name = aws_efs_file_system.efs_testing.dns_name
-    mount_point = var.efs_mount_point
+    mount_point  = var.efs_mount_point
   }
 }
 
@@ -56,6 +56,7 @@ resource "aws_instance" "application" {
   subnet_id                   = aws_subnet.public_subnets[var.application_instance_azs[count.index]].id
   associate_public_ip_address = true
   user_data                   = data.template_file.efs_userdata.rendered
+  depends_on                  = [aws_efs_mount_target.efs_mt_public_testing]
   tags = {
     Name = "${aws_subnet.public_subnets[var.application_instance_azs[count.index]].tags.Name}-ec2-instance"
   }

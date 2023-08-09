@@ -3,6 +3,7 @@ resource "tls_private_key" "key_pair" {
   rsa_bits  = 4096
 }
 
+
 resource "aws_key_pair" "ec2_key_pair" {
   key_name   = "ec2_key_pair"
   public_key = tls_private_key.key_pair.public_key_openssh

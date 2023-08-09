@@ -3,6 +3,7 @@ variable "aws_access_key" {
   description = "Access key of AWS to access from terraform"
   sensitive   = true
 }
+
 variable "aws_secret_key" {
   type        = string
   description = "Secret key of AWS to access from terraform"
