@@ -3,6 +3,7 @@ locals {
   db_port = 3306
 }
 
+#vpc
 module "testing_vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -19,12 +20,13 @@ module "testing_vpc" {
   }
 }
 
+#application_server_security_group
 module "app_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = ">= 5.1.0"
 
   vpc_id              = module.testing_vpc.vpc_id
-  name                = "application_server_sg"
+  name                = "app_sg"
   description         = "SSH ingress allow, all egress allow"
   ingress_rules       = ["ssh-tcp"]
   ingress_cidr_blocks = ["0.0.0.0/0"]
@@ -32,6 +34,7 @@ module "app_sg" {
   egress_cidr_blocks  = ["0.0.0.0/0"]
 }
 
+#amazon_linux2_ami_data
 data "aws_ami" "amazon_linux2" {
   most_recent = true
   filter {
@@ -45,6 +48,7 @@ data "aws_ami" "amazon_linux2" {
   }
 }
 
+#private_key_creation
 resource "tls_private_key" "key_pair" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -61,6 +65,7 @@ resource "local_file" "ssh_key" {
   file_permission = "0400"
 }
 
+#ec2_app_instance
 module "app_instance" {
   source = "terraform-aws-modules/ec2-instance/aws"
 
@@ -79,12 +84,13 @@ module "app_instance" {
   }
 }
 
+#database_security_group
 module "database_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = ">= 5.1.0"
 
   vpc_id      = module.testing_vpc.vpc_id
-  name        = "database_sg"
+  name        = "db_sg"
   description = "allow database access from app-sg"
   ingress_with_source_security_group_id = [
     {
@@ -100,12 +106,13 @@ module "database_sg" {
   ]
 }
 
+#random_password_for_rds
 resource "random_password" "db" {
   length           = 16
-  special          = true
-  override_special = "!#$%&*()-_=+[]{}<>:?"
+  special          = false
 }
 
+#database
 module "db" {
   source = "terraform-aws-modules/rds/aws"
 
@@ -135,6 +142,7 @@ module "db" {
   }
 }
 
+#ec2_configuration
 resource "null_resource" "instance" {
   connection {
     type        = "ssh"
