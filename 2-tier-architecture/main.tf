@@ -1,12 +1,17 @@
+locals {
+  db_user = "admin"
+  db_port = 3306
+}
+
 module "testing_vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
   name = "testing"
   cidr = "10.0.0.0/16"
 
-  azs                     = ["ap-southeast-1a"]
-  private_subnets         = ["10.0.1.0/24"]
-  public_subnets          = ["10.0.2.0/24"]
+  azs                     = ["ap-southeast-1a", "ap-southeast-1b"]
+  public_subnets          = ["10.0.1.0/24"]
+  private_subnets         = ["10.0.2.0/24", "10.0.3.0/24"]
   map_public_ip_on_launch = false
 
   tags = {
@@ -27,7 +32,7 @@ module "app_sg" {
   egress_cidr_blocks  = ["0.0.0.0/0"]
 }
 
-data "aws_ami" "ubuntu" {
+data "aws_ami" "amazon_linux2" {
   most_recent = true
   filter {
     name   = "owner-alias"
@@ -35,7 +40,8 @@ data "aws_ami" "ubuntu" {
   }
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-*-amd64-server-*"]
+    # values = ["ubuntu/images/hvm-ssd/ubuntu-*-amd64-server-*"] /ubuntu
+    values = [ "amzn2-ami-kernel-*-hvm-*-x86_64-gp2" ]
   }
 }
 
@@ -59,7 +65,7 @@ module "app_instance" {
   source = "terraform-aws-modules/ec2-instance/aws"
 
   name                        = var.app_instance_name
-  ami                         = data.aws_ami.ubuntu.id
+  ami                         = data.aws_ami.amazon_linux2.id
   instance_type               = var.app_instance_type
   key_name                    = aws_key_pair.ec2_key_pair.key_name
   vpc_security_group_ids      = [module.app_sg.security_group_id]
@@ -108,21 +114,42 @@ module "db" {
   engine               = "mysql"
   engine_version       = "8.0"
   instance_class       = var.db_instance_type
-  allocated_storage    = 5
+  allocated_storage    = 20
   skip_final_snapshot  = true       #for easier replacement. not for prod
   family               = "mysql8.0" #parameter group
   major_engine_version = "8.0"      #options group
 
+  multi_az               = false
   availability_zone      = module.testing_vpc.azs[0]
+  create_db_subnet_group = true
   subnet_ids             = module.testing_vpc.private_subnets
   vpc_security_group_ids = [module.database_sg.security_group_id]
 
-  db_name  = "test"
-  username = "admin"
-  password = random_password.db.result
-  port     = "3306"
+  username                    = local.db_user
+  manage_master_user_password = false
+  password                    = random_password.db.result
+  port                        = local.db_port
 
   tags = {
     Environment = "dev"
+  }
+}
+
+resource "null_resource" "instance" {
+  connection {
+    type        = "ssh"
+    host        = module.app_instance.public_ip
+    user        = "ec2-user"
+    private_key = file("${path.module}/${local_file.ssh_key.filename}")
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum update -y",
+      "sudo yum install mariadb -y",
+      "echo 'CREATE DATABASE HC_winMawOo;' >> /tmp/test.sql",
+      "echo 'SHOW DATABASES;' >> /tmp/test.sql",
+      "echo 'mysql -h ${module.db.db_instance_address} -u ${local.db_user} -P ${local.db_port} -p < /tmp/test.sql' >> /tmp/script.sh",
+      "chmod +x /tmp/script.sh"
+    ]
   }
 }

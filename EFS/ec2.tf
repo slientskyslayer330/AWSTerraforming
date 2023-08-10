@@ -57,6 +57,7 @@ resource "aws_instance" "application" {
   associate_public_ip_address = true
   user_data                   = data.template_file.efs_userdata.rendered
   depends_on                  = [aws_efs_mount_target.efs_mt_public_testing]
+  user_data_replace_on_change = true
   tags = {
     Name = "${aws_subnet.public_subnets[var.application_instance_azs[count.index]].tags.Name}-ec2-instance"
   }
