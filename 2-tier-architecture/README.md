@@ -2,7 +2,13 @@
 
 My second hobby project. It creates Virtual Private Cloud(VPS) in singapore region, Public Subnet for application server(app), Private Subnet for database(db) first. Security groups related to app and db are created afterwards. And finally it creates app and db in the end. It architecutrual diagram is as follows;
 
-    ![2_tier_architecture](./Diagram/2_tier_architecture.png)
+<p align="center">
+  <img
+    width="400"
+    src="https://raw.githubusercontent.com/slientskyslayer330/AWSTerraforming/main/2-tier-architecture/Diagram/2_tier_architecture.png"
+    alt="2-tier-architecture"
+  />
+</p>
 
 
 ## How to use
