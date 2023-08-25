@@ -1,0 +1,204 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "cloudformation-vpc"
+Resources:
+  #VPC
+  nonProdVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "192.168.0.0/16"
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: "default"
+      Tags:
+        - Key: "Name"
+          Value: "non-prod-vpc"
+  #public subnet1
+  publicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "ap-southeast-1a"
+      VpcId: !Ref nonProdVPC
+      CidrBlock: "192.168.1.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Name"
+          Value: "public-subnet1"
+  #public subnet2
+  publicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "ap-southeast-1b"
+      VpcId: !Ref nonProdVPC
+      CidrBlock: "192.168.2.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Name"
+          Value: "public-subnet2"
+  #public subnet3
+  publicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "ap-southeast-1c"
+      VpcId: !Ref nonProdVPC
+      CidrBlock: "192.168.3.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: "Name"
+          Value: "public-subnet3"
+  #internet gateway for vpc
+  nonProdIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "non-prod-igw"
+  #Internet gateway attach --> VPC
+  attachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref nonProdVPC
+      InternetGatewayId: !Ref nonProdIGW
+  #route table for public subnets
+  publicRT:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref nonProdVPC
+      Tags:
+        - Key: "Name"
+          Value: "public-route-table"
+  #route internet gateway --> internet in route table
+  igwRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref publicRT
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref nonProdIGW
+  #route table association for public route table and public subnet1
+  routeTableAssocPublicSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet1
+      RouteTableId: !Ref publicRT
+  #route table association for public route table and public subnet2
+  routeTableAssocPublicSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet2
+      RouteTableId: !Ref publicRT
+  #route table association for public route table and public subnet3
+  routeTableAssocPublicSubnet3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref publicSubnet3
+      RouteTableId: !Ref publicRT
+  #private subnet1
+  privateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "ap-southeast-1a"
+      VpcId: !Ref nonProdVPC
+      CidrBlock: "192.168.4.0/24"
+      Tags:
+        - Key: "Name"
+          Value: "private-subnet1"
+  #private subnet2
+  privateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "ap-southeast-1b"
+      VpcId: !Ref nonProdVPC
+      CidrBlock: "192.168.5.0/24"
+      Tags:
+        - Key: "Name"
+          Value: "private-subnet2"
+  #private subnet3
+  privateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "ap-southeast-1c"
+      VpcId: !Ref nonProdVPC
+      CidrBlock: "192.168.6.0/24"
+      Tags:
+        - Key: "Name"
+          Value: "private-subnet3"
+  #elastic ip for nat gateway
+  natGatewayEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: "Name"
+          Value: "nat-gateway-eip"
+  #nat gateway
+  nonProdNAT:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt natGatewayEIP.AllocationId
+      ConnectivityType: "public"
+      SubnetId: !Ref publicSubnet1
+      Tags:
+        - Key: "Name"
+          Value: "non-prod-NAT-gateway"
+  #private route table 1
+  privateRT1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref nonProdVPC
+      Tags:
+        - Key: "Name"
+          Value: "private-route-table1"
+  #route nat gateway --> internet in route table
+  natRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref privateRT1
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref nonProdNAT
+  #route table association for private route table1 and private subnet1
+  routeTableAssocPrivateSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateSubnet1
+      RouteTableId: !Ref privateRT1
+  #private route table 2
+  privateRT2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref nonProdVPC
+      Tags:
+        - Key: "Name"
+          Value: "private-route-table2"
+  #route nat gateway --> internet in route table
+  natRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref privateRT2
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref nonProdNAT
+  #route table association for private route table2 and private subnet2
+  routeTableAssocPrivateSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateSubnet2
+      RouteTableId: !Ref privateRT2
+  #private route table 3
+  privateRT3:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref nonProdVPC
+      Tags:
+        - Key: "Name"
+          Value: "private-route-table3"
+  #route nat gateway --> internet in route table
+  natRoute3:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref privateRT3
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref nonProdNAT
+  #route table association for private route table3 and private subnet3
+  routeTableAssocPrivateSubnet3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref privateSubnet3
+      RouteTableId: !Ref privateRT3
