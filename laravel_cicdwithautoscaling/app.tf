@@ -34,7 +34,7 @@ resource "aws_alb" "laravel_alb" {
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = [for subnet in aws_subnet.public_subnets : subnet.id]
   tags = {
-    Environment = "production"
+    Name = "Laravel-ALB"
   }
 }
 

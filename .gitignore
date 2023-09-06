@@ -36,3 +36,6 @@ terraform.rc
 
 # ec2-keypairs
 *.pem
+
+# pycharm files
+.idea/**
